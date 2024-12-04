@@ -2,12 +2,13 @@
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
+#include<stdbool.h>
 #define b 10
 typedef struct tRec{
     int ID;
     char firstName[20];
     char familyName[20];
-    char dateBirth[10];
+    char dateBirth[12];
     char cityBirth[15];
     int missingValues[5];
 }tRec;
@@ -170,48 +171,42 @@ char* partitions( char* phrase, int part, char delimiter) {
     return result;
 }
 
-// long binsearch( t_rec val, int *found, long *i, int *j )
-// {
-//    long low, up, counter;
-//    int stop, inf, sup;
 
-//    low = 1;
-//    up = getHeader( f, "nBlock" );
-//    *found = 0;
-//    stop = 0;
-//    counter = 0; // 'readBlock' counter
-
-//    // external search ...
-//    while ( low <= up && !*found && !stop ) {
-// 	*i = (low + up) / 2;     // the middle between low and up
-// 	TOF_readBlock( f, *i, &buf ); counter++; block_in_MM = *i; 	
-// 	if ( val < buf.tab[0] )
-// 	   up = *i - 1;		// search continues in the first half
-// 	else
-// 	   if ( val > buf.tab[ buf.nb-1 ] )
-// 	      	low = *i + 1;	// search continues in the last half
-// 	   else {
-// 		stop = 1;	 
-// 	      	inf = 0;
-// 		sup = buf.nb-1; 
-//                 // internal search (inside buf) ...
-// 		while ( inf <= sup && !*found ) {
-// 		   *j = (inf + sup) / 2;
-// 		   if ( val == buf.tab[*j] ) *found = 1;
-// 		   else
-// 			if ( val < buf.tab[*j] )
-// 			   sup = *j - 1;
-// 			else
-// 			   inf = *j + 1;
-// 	   	} // end while -- internal search
-// 		if ( inf > sup ) *j = inf;
-// 	   }
-//    } // end while -- external search
-//    if ( low > up ) {
-// 	*i = low;
-// 	*j = 0;
-//    }
-
-//    return counter;
-
-// } // binsearch
+void readStudent(tRec student){
+    char fields[5][10] = {"ID","firstname","lastName","dateBirth","cityBirth"};
+    bool missing = false;
+    for (int i = 0; i < 5; i++)
+    {
+        if (student.missingValues[i] == 1)
+        {
+            missing = true;
+            printf("-The %s is missing\n",fields[i]);
+        } else {
+            switch (i)
+            {
+            case 0:
+                printf("-The ID is : %d\n",student.ID);
+                break;
+            case 1:
+                printf("-The firstname is : %s\n",student.firstName);
+                break;
+            case 2:
+                printf("-The lastname is : %s\n",student.familyName);
+                break;
+            case 3:
+                printf("-The date of birth is : %s\n",student.dateBirth);
+                break;
+            case 4:
+                printf("-The city of birth is : %s\n",student.cityBirth);
+                break;
+            }
+        }
+        
+    }
+    if (!missing)
+    {
+        printf("--- There is no missing values --- ");
+    }
+    
+    
+}
