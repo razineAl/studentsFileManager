@@ -4,6 +4,7 @@
 #include<ctype.h>
 #include<stdbool.h>
 #define b 10
+#define ld 0.7
 typedef struct tRec{
     int ID;
     char firstName[20];
