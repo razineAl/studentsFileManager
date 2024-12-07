@@ -6,7 +6,7 @@
 // #include "TOF_operations.h"
 
 
-
+long block_in_MM = -1;
 
 void binsearch(TOF* P, int val, int *found, long *i, int *j );
 
@@ -17,13 +17,14 @@ int main(){
     header h;
     BUFFER buff;
     int found;
-    int i,j;
+    long i;
+    int j;
     TOF_OPEN(&P,"test.bin",'n');
     h = P->h;
     buff.NB = 0;
-    buff.tab[buff.NB] = r;
-    buff.NB++;
     buff.tab[buff.NB] = r2;
+    buff.NB++;
+    buff.tab[buff.NB] = r;
     buff.NB++;
     writeBlock(P,1,&buff);
     setHeader(P,1,1);
@@ -33,10 +34,16 @@ int main(){
     readStudent(student);
     student = buff.tab[1];
     readStudent(student);
-    binsearch(P, 1000, &found, &i, &j );
     printf("le nombre de blocs est : %d \nle nombre d'enregistrements est : %d\nle nombre d'enregistrements supprimes est : %d\n",P->h.nBlock,P->h.nRec,P->h.nDelRec);
-  
-    printf("The block is  : %d and the offset is %d",i,j);
+    binsearch(P, 11600, &found, &i, &j );
+    if (found == 1)
+    {
+        printf("the record is found in the Block N : %d and it's the record N %d\n",i,j+1);
+    }
+    else
+    {
+        printf("the record is not found and it must be inserted in the Block N : %d in the position : %d\n",i,j+1);
+    }
     TOF_close(P);
     return 0;
 }
@@ -61,7 +68,7 @@ void binsearch(TOF* P, int val, int *found, long *i, int *j ){
 	if ( val < buf.tab[0].ID )
 	   up = *i - 1;		// search continues in the first half
 	else
-	   if ( val > buf.tab[buf.NB-1].ID )
+	   if ( val > buf.tab[buf.NB-1].ID && buf.NB >= b*ld )
 	      	low = *i + 1;	// search continues in the last half
 	   else {
 		stop = 1;	 
@@ -88,4 +95,7 @@ void binsearch(TOF* P, int val, int *found, long *i, int *j ){
    return ;
 
 } // binsearch
+
+
+
 

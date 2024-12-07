@@ -8,13 +8,14 @@ typedef struct tRec{
     int ID;
     char firstName[20];
     char familyName[20];
-    char dateBirth[12];
+    char dateBirth[15];
     char cityBirth[15];
     int missingValues[5];
 }tRec;
 
 typedef struct tBlock{
     tRec tab[b];
+    int del[b];
     int NB;
 }tBlock,BUFFER;
 
@@ -127,11 +128,13 @@ int getHeader(TOF* file,int i){
 }
 
 
-char* partitions( char* phrase, int part, char delimiter) {
+
+
+char* partitions(char* phrase, int part, char delimiter) {
     if (phrase == NULL || part < 1) {
         return NULL;
     }
-    
+
     int i = 1; // Track the current partition
     char* start = phrase; // Pointer to the start of a part
     char* end = NULL; // Pointer to the end of a part
@@ -157,6 +160,19 @@ char* partitions( char* phrase, int part, char delimiter) {
         return NULL; // Part not found or empty part
     }
 
+    // Trim leading and trailing spaces
+    while (start < end && isspace((unsigned char)*start)) {
+        start++;
+    }
+    while (end > start && isspace((unsigned char)*(end - 1))) {
+        end--;
+    }
+
+    // Check if the trimmed part is empty
+    if (start == end) {
+        return NULL; // Part is only spaces or empty
+    }
+
     // Allocate memory for the result
     size_t length = end - start;
     char* result = malloc(length + 1);
@@ -172,32 +188,33 @@ char* partitions( char* phrase, int part, char delimiter) {
 }
 
 
+
 void readStudent(tRec student){
-    char fields[5][10] = {"ID","firstname","lastName","dateBirth","cityBirth"};
+    char fields[5][15] = {"ID","firstname","lastName","date of birth","city of birth"};
     bool missing = false;
     for (int i = 0; i < 5; i++)
     {
         if (student.missingValues[i] == 1)
         {
             missing = true;
-            printf("-The %s is missing\n",fields[i]);
+            printf("- The %s is missing\n",fields[i]);
         } else {
             switch (i)
             {
             case 0:
-                printf("-The ID is : %d\n",student.ID);
+                printf("- The ID is : %d\n",student.ID);
                 break;
             case 1:
-                printf("-The firstname is : %s\n",student.firstName);
+                printf("- The firstname is : %s\n",student.firstName);
                 break;
             case 2:
-                printf("-The lastname is : %s\n",student.familyName);
+                printf("- The lastname is : %s\n",student.familyName);
                 break;
             case 3:
-                printf("-The date of birth is : %s\n",student.dateBirth);
+                printf("- The date of birth is : %s\n",student.dateBirth);
                 break;
             case 4:
-                printf("-The city of birth is : %s\n",student.cityBirth);
+                printf("- The city of birth is : %s\n",student.cityBirth);
                 break;
             }
         }
@@ -205,8 +222,9 @@ void readStudent(tRec student){
     }
     if (!missing)
     {
-        printf("--- There is no missing values --- ");
+        printf("--- There is no missing values --- \n");
     }
     
     
 }
+
