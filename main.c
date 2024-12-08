@@ -9,19 +9,22 @@
 long block_in_MM = -1;
 
 void init_student(tRec* student);
-void init_Buffer(BUFFER* buf);
+// void init_Buffer(BUFFER* buf);
+void del(TOF* P, int val,int factor);
 tRec extractStudent(char* line);
 void ins(TOF* P,tRec student, int factor);
 int main(){
 
    float ld = 0.7;
-   int factor = (int)(ld*b);
+   int factor = (int)(ld*b + 0.5);
     FILE* f = fopen("students_data_1a.csv","r");
+    FILE* file = fopen("delete_students.csv","r");
     TOF* P;
     BUFFER buff,buff1;
     long i;
     int j;
-    char line[255], delimiters[] = ",";
+    int cpt1=0,cpt2=0;
+    char line[255],lineID[255], delimiters[] = ",";
     tRec student;
 
     TOF_OPEN(&P,"students_TOF.bin",'n');
@@ -30,7 +33,12 @@ int main(){
     
     if (f == NULL)
     {
-        printf("error while opening the file :((");
+        printf("error while opening the first file :((");
+        return 0;
+    }
+    if (file == NULL)
+    {
+        printf("error while opening the \"IDs to delete\" file :((");
         return 0;
     }
     
@@ -41,14 +49,22 @@ int main(){
         
    }
 
-   
+   while(fgets(lineID,255,file) != NULL){
+      int id = atoi(lineID);
+      del(P,id,factor);
+        
+   }
+
    
 
-   readBlock(P,2,&buff);
-   for (int i = 0; i < buff.NB; i++)
-   {
-     readStudent(buff.tab[i]);
-   }
+   // readBlock(P,143,&buff);
+   // for (int i = 0; i < buff.NB; i++)
+   // {
+   //   readStudent(buff.tab[i]);
+   // }
+   
+
+   printf("the number of blocks is %d and the number of records is %d and the number of deleted records is %d",getHeader(P,1),getHeader(P,2),getHeader(P,3));
    
     
    TOF_close(P);    
@@ -121,7 +137,7 @@ tRec extractStudent(char* line){
     }
     return student;
 }
-void binsearch(TOF* P, int val, int *found, long *i, int *j, int factor ){
+long binsearch(TOF* P, int val, int *found, long *i, int *j, int factor ){
    long low, up, counter;
    int stop, inf, sup;
    BUFFER buf;
@@ -164,7 +180,7 @@ void binsearch(TOF* P, int val, int *found, long *i, int *j, int factor ){
 	*j = 0;
    }
 
-   return ;
+   return counter;
 
 } // binsearch
 
@@ -178,13 +194,13 @@ void ins(TOF* P, tRec E, int factor)
    int val = E.ID;
 
    // locate the address (i,j) where to insert the new record...
-   binsearch( P,val, &found, &i, &j,factor );
+   SearchCost = binsearch( P,val, &found, &i, &j,factor );
 
    // read block i (if necessary)
    readBlock( P , i , &buf );
 
 //    printf("the search costs %ld reads.\n", SearchCost);
-   if (found && buf.del[j] == 0) {
+   if (found && buf.del[j] == ' ') {
       // if the given record exists and is not logically deleted, do nothing
       printf("Insertion refused because the value already exists in block %ld at position %d\n",\
 	      i, j);
@@ -200,9 +216,8 @@ void ins(TOF* P, tRec E, int factor)
 
    if ( i > getHeader( P, 1 ) ) {
       // special case of insertion at end of file ...
-      init_Buffer(&buf);
       buf.tab[0] = E;
-      buf.del[0] = 0;
+      buf.del[0] = ' ';
       buf.NB = 1;
       writeBlock( P, i, &buf ); InsCost++;
       setHeader( P, 1, getHeader( P,1 ) + 1 );
@@ -214,9 +229,9 @@ void ins(TOF* P, tRec E, int factor)
 	while ( !stop && j < buf.NB ) {	// internal loop for intra-block shifts ...
 	   sauv = buf.tab[j];
 	   buf.tab[j] = E;
-	   if ( buf.del[j] != 0 ) {   // if slot j is unused (contains a delete record) 
+	   if ( buf.del[j] == '*' ) {   // if slot j is unused (contains a delete record) 
 		stop = 1;               // we use it and stop shift processing
-		buf.del[j] = 0;
+		buf.del[j] = ' ';
 	   }	
 	   else {                       // else, shifts continues to next slot (j+1)
 	   	j++;
@@ -225,9 +240,9 @@ void ins(TOF* P, tRec E, int factor)
 	} // end loop -- intra-block shifts
 
 	if ( j == buf.NB ) 	// or stop == 0
-	   if ( buf.NB < factor ) {
+	   if ( buf.NB < factor ){
 		buf.NB++;
-		buf.tab[j] = E;  buf.del[j] = 0;
+		buf.tab[j] = E;  buf.del[j] = ' ';
 		writeBlock( P, i, &buf ); InsCost++;
 		stop = 1;
 	   }
@@ -239,9 +254,8 @@ void ins(TOF* P, tRec E, int factor)
 		}
 		else {
       	      	   // we reach the end-of-file, so we append a new block ...
-                     init_Buffer(&buf);
       	      	   buf.tab[0] = E;
-      	      	   buf.del[0] = 0;
+      	      	   buf.del[0] = ' ';
       	      	   buf.NB = 1;
       	      	   writeBlock( P, i, &buf ); InsCost++;
                    setHeader( P, 1, getHeader( P, 1 )+1 );
@@ -264,16 +278,42 @@ void ins(TOF* P, tRec E, int factor)
 
    // printf("\tCosts in read/write counts (search:%ld + shifts:%ld) = %ld\n", \
 	// 	SearchCost, InsCost, SearchCost+InsCost);
-   printf("End of insertion\n");
+   printf("End of insertion \n");
 
 } // ins
 
+void del(TOF* P, int val,int factor)
+{
+   long i, SearchCost;
+   int found, j;
+   BUFFER buf;
 
-void init_Buffer(BUFFER* buf){
-   tRec r = {-1,"","","","",{0,0,0,0,0}};
-   for (int i = 0; i < b; i++)
-   {
-      (*buf).tab[i] = r;
+   SearchCost = binsearch( P, val, &found, &i, &j ,factor);
+
+   printf("The cost of the search phase %ld reads.\n", SearchCost);
+   readBlock(P,i,&buf);
+   if (!found || buf.del[j] == '*') {
+      printf("Deletion aborted because the record in not found\n");
+      return;
    }
-   return;
-}
+
+   printf("The record to be deleted is in block %ld at position %d\n", i, j);
+
+   buf.del[j] = '*';		// mark the slot j as 'deleted'
+   writeBlock( P, i, &buf );
+
+   setHeader( P, 3, getHeader(P, 3)+1 );
+
+   printf("Total cost (search + del) = %ld + 1 = %ld reads/writes\n", SearchCost, SearchCost+1 );
+
+} // del
+
+
+// void init_Buffer(BUFFER* buf){
+//    tRec r = {-1,"","","","",{0,0,0,0,0}};
+//    for (int i = 0; i < b; i++)
+//    {
+//       (*buf).tab[i] = r;
+//    }
+//    return;
+// }
