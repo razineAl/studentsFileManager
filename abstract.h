@@ -3,7 +3,10 @@
 #include<string.h>
 #include<ctype.h>
 #include<stdbool.h>
-#define b 10
+
+
+#define b 100
+
 typedef struct tRec{
     int ID;
     char firstName[20];
