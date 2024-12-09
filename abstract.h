@@ -18,7 +18,7 @@ typedef struct tRec{
 
 typedef struct tBlock{
     tRec tab[b];
-    int del[b];
+    char del[b];
     int NB;
 }tBlock,BUFFER;
 
